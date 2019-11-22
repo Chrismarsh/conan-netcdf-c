@@ -9,9 +9,12 @@ class NetcdfcConan(ConanFile):
     url = "https://github.com/bilke/conan-netcdf-c"
     description = "Unidata network Common Data Form"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False], "fPIC": [True, False],
-        "netcdf_4": [True, False], "dap": [True, False]}
-    default_options = "shared=False", "fPIC=True", "netcdf_4=True", "dap=False"
+    options = {"shared": [True, False], 
+                "fPIC": [True, False],
+                "netcdf_4": [True, False], 
+                "dap": [True, False],
+                "parallel4":[True,False]}
+    default_options = "shared=False", "fPIC=True", "netcdf_4=True", "dap=False", "parallel4=False"
     generators = "cmake"
 
     def source(self):
@@ -50,7 +53,7 @@ conan_basic_setup()''')
 
     def requirements(self):
         if self.options.netcdf_4:
-            self.requires("hdf5/1.10.5-dm1@bilke/testing")
+            self.requires("hdf5/1.10.5@CHM/dev")
         if self.options.dap:
             self.requires("libcurl/7.64.1@bincrafters/stable")
 
@@ -60,6 +63,7 @@ conan_basic_setup()''')
         cmake.definitions["BUILD_UTILITIES"] = False
         cmake.definitions["ENABLE_NETCDF_4"] = self.options.netcdf_4
         cmake.definitions["ENABLE_DAP"] = self.options.dap
+        cmake.definitions["ENABLE_PARALLEL4"] = self.options.parallel4
         cmake.configure(source_folder="netcdf-c")
         return cmake
 
