@@ -9,12 +9,12 @@ class NetcdfcConan(ConanFile):
     url = "https://github.com/bilke/conan-netcdf-c"
     description = "Unidata network Common Data Form"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False], 
+    options = {"shared": [True, False],
                 "fPIC": [True, False],
-                "netcdf_4": [True, False], 
+                "netcdf_4": [True, False],
                 "dap": [True, False],
                 "parallel4":[True,False]}
-    default_options = "shared=False", "fPIC=True", "netcdf_4=True", "dap=False", "parallel4=False"
+    default_options = "shared=True", "fPIC=True", "netcdf_4=True", "dap=False", "parallel4=False"
     generators = "cmake"
 
     def source(self):
@@ -77,4 +77,3 @@ conan_basic_setup()''')
 
     def package_info(self):
         self.cpp_info.libs = ["netcdf"]
-
