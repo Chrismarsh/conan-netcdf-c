@@ -64,6 +64,10 @@ conan_basic_setup()''')
         cmake.definitions["ENABLE_NETCDF_4"] = self.options.netcdf_4
         cmake.definitions["ENABLE_DAP"] = self.options.dap
         cmake.definitions["ENABLE_PARALLEL4"] = self.options.parallel4
+
+        if self.settings.os == 'Macos':
+            cmake.definitions["CMAKE_INSTALL_NAME_DIR"] = "@rpath"
+
         cmake.configure(source_folder="netcdf-c")
         return cmake
 
