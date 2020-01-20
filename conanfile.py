@@ -25,7 +25,11 @@ class NetcdfcConan(ConanFile):
         tools.replace_in_file("netcdf-c/CMakeLists.txt", "project(netCDF C)",
                               '''project(netCDF C)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()''')
+conan_basic_setup(KEEP_RPATHS)''')
+
+        tools.replace_in_file("netcdf-c/CMakeLists.txt",
+                              "IF(NOT MSVC AND BUILD_SHARED_LIBS)",
+                              "IF(FALSE)")
 
         # Fix overwriting of CMAKE_MODULE_PATH set by Conan
         tools.replace_in_file("netcdf-c/CMakeLists.txt",
