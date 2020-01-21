@@ -19,13 +19,18 @@ class NetcdfcConan(ConanFile):
 
     def source(self):
         self.run("git clone --depth=1 --branch v{0} https://github.com/Unidata/netcdf-c.git".format(self.version))
-        # This small hack might be useful to guarantee proper /MT /MD linkage
-        # in MSVC if the packaged project doesn't have variables to set it
-        # properly
-        tools.replace_in_file("netcdf-c/CMakeLists.txt", "project(netCDF C)",
-                              '''project(netCDF C)
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()''')
+
+        #under macos, we need the install_name to remain with an  @rpath dir prefix. On linux, we don't need that
+        if tools.os_info.is_macos:
+            tools.replace_in_file("netcdf-c/CMakeLists.txt", "project(netCDF C)",
+                                  '''project(netCDF C)
+                                    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+                                    conan_basic_setup(KEEP_RPATHS)''')
+        else:
+            tools.replace_in_file("netcdf-c/CMakeLists.txt", "project(netCDF C)",
+                                  '''project(netCDF C)
+                                    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+                                    conan_basic_setup()''')
 
         # Fix overwriting of CMAKE_MODULE_PATH set by Conan
         tools.replace_in_file("netcdf-c/CMakeLists.txt",
@@ -64,6 +69,9 @@ conan_basic_setup()''')
         cmake.definitions["ENABLE_NETCDF_4"] = self.options.netcdf_4
         cmake.definitions["ENABLE_DAP"] = self.options.dap
         cmake.definitions["ENABLE_PARALLEL4"] = self.options.parallel4
+
+        if tools.os_info.is_macos:
+            cmake.definitions["CMAKE_INSTALL_NAME_DIR"] = "@rpath"
 
         cmake.configure(source_folder="netcdf-c")
         return cmake
