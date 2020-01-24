@@ -1,5 +1,6 @@
 from cpt.packager import ConanMultiPackager
 from collections import defaultdict
+from sys import platform
 
 if __name__ == "__main__":
 
