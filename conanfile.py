@@ -4,10 +4,8 @@ import os
 
 class NetcdfcConan(ConanFile):
     name = "netcdf-c"
-    version = "4.6.2"
     license = "MIT"
-    author = "Lars Bilke, lars.bilke@ufz.de"
-    url = "https://github.com/bilke/conan-netcdf-c"
+    url = "https://github.com/Chrismarsh/conan-netcdf-c"
     description = "Unidata network Common Data Form"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False],
@@ -18,9 +16,14 @@ class NetcdfcConan(ConanFile):
     default_options = "shared=True", "fPIC=True", "netcdf_4=True", "dap=False", "parallel4=False"
     generators = "cmake"
 
-    def source(self):
-        self.run("git clone --depth=1 --branch v{0} https://github.com/Unidata/netcdf-c.git".format(self.version))
+    source_subfolder = 'netcdf-c'
 
+    def source(self):
+
+        tools.get(**self.conan_data["sources"][self.version])
+
+        os.rename("netcdf-c-{0}".format(self.version), self.source_subfolder)
+   
         #under macos, we need the install_name to remain with an  @rpath dir prefix. On linux, we don't need that
         if tools.os_info.is_macos:
             tools.replace_in_file("netcdf-c/CMakeLists.txt", "project(netCDF C)",
@@ -37,31 +40,24 @@ class NetcdfcConan(ConanFile):
         tools.replace_in_file("netcdf-c/CMakeLists.txt",
             "SET(CMAKE_MODULE_PATH",
             "SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}")
+        
         # Fix usage of custom FindHDF5.cmake in hdf5 package
         # Also: Fix NO_MODULES to NO_MODULE, removed link type
         tools.replace_in_file("netcdf-c/CMakeLists.txt",
-            "FIND_PACKAGE(HDF5 NAMES ${SEARCH_PACKAGE_NAME} COMPONENTS C HL NO_MODULES REQUIRED ${NC_HDF5_LINK_TYPE})",
+            "FIND_PACKAGE(HDF5 COMPONENTS C HL REQUIRED)",
             '''set(HDF5_DIR ${CONAN_HDF5_ROOT}/cmake/hdf5)
-      FIND_PACKAGE(HDF5 REQUIRED COMPONENTS C HL NO_MODULE)''')
+      FIND_PACKAGE(HDF5 COMPONENTS C HL REQUIRED)''')
+
         tools.replace_in_file("netcdf-c/liblib/CMakeLists.txt",
             "TARGET_LINK_LIBRARIES(netcdf ${TLL_LIBS})",
             "TARGET_LINK_LIBRARIES(netcdf ${TLL_LIBS} ${CONAN_LIBS})")
 
-    def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
-
-    def configure(self):
-        del self.settings.compiler.libcxx
-        del self.settings.compiler.cppstd
-        if self.settings.os == "Windows" and self.options.shared:
-            raise ConanInvalidConfiguration("Windows shared builds are not supported right now")
-
+      
     def requirements(self):
         if self.options.netcdf_4:
-            self.requires("hdf5/1.10.5@CHM/stable")
+            self.requires("hdf5/[>=1.12]@CHM/stable")
         if self.options.dap:
-            self.requires("libcurl/7.64.1@bincrafters/stable")
+            self.requires("libcurl/[>=7.64]@bincrafters/stable")
 
     def configure_cmake(self):
         cmake = CMake(self)
@@ -72,7 +68,7 @@ class NetcdfcConan(ConanFile):
         cmake.definitions["ENABLE_PARALLEL4"] = self.options.parallel4
 
         if tools.os_info.is_macos:
-            cmake.definitions["CMAKE_INSTALL_NAME_DIR"] = "@rpath"
+            cmake.definitions["CMAKE_INSTALL_NAME_DIR"] = '@rpath' #self.package_folder+'/lib'
 
         cmake.configure(source_folder="netcdf-c")
         return cmake
